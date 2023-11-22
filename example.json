@@ -1,0 +1,18 @@
+{
+    "interface": "pppoe-wan",
+    "secret_id": "YOUR_ID",
+    "secret_key": "YOUR_KEY",
+    "domain": "YOUR_DOMAIN",
+    "subs": [
+        {
+            "subdomain": "www",
+            "record_id": 18475477345,
+            "record_type": "A"
+        },
+        {
+            "subdomain": "www",
+            "record_id": 18475477346,
+            "record_type": "AAAA"
+        }
+    ]
+}
