@@ -1,5 +1,9 @@
+extern crate pnet;
+extern crate ipnetwork;
+
 use anyhow::{anyhow, Result};
 use pnet::datalink;
+use ipnetwork::Ipv6Network;
 
 /// 获取本机的公网 IP
 /// https://4.ipw.cn => 192.168.1.1
@@ -37,7 +41,11 @@ pub fn get_ip(intf: &str, recordtype: &str) -> Result<String> {
                     return Ok(ip.ip().to_string());
                 } else if ip.is_ipv6() && recordtype == "AAAA" {
                     // println!("IPV6: {:?}", ip.ip())
-                    return Ok(ip.ip().to_string());
+                    let ll_net: Ipv6Network = "fe80::/16".parse().unwrap();
+                    let ipstr = ip.ip().to_string();
+                    if ! ll_net.contains(ipstr.parse().unwrap()) {
+                        return Ok(ipstr);
+                    }
                 }
             }
         }

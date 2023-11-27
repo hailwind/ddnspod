@@ -244,6 +244,7 @@ dependencies = [
  "anyhow",
  "clap",
  "dnspod-lib",
+ "ipnetwork",
  "openssl",
  "pnet",
  "rand",
