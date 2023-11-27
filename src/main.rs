@@ -33,6 +33,7 @@ fn main() -> anyhow::Result<()> {
             match cache.get(&item.record_id) {
                 Some(x) => {
                     if *x != ip_str {
+                        println!("x:{} ip_str:{}", *x, ip_str);
                         changed = true;
                     }
                 }
