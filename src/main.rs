@@ -25,54 +25,58 @@ fn main() -> anyhow::Result<()> {
 
     loop {
         for item in &conf.subs {
-            let ip_str = utils::get_ip(&conf.interface, &item.record_type).unwrap();
-            let mut changed = false;
-            // let key = format!("{}", item.record_id);
-            match cache.get(&item.record_id) {
-                Some(x) => {
-                    if *x != ip_str {
-                        // println!("x:{} ip_str:{}", *x, ip_str);
-                        changed = true;
+            let r = utils::get_ip(&conf.interface, &item.record_type);
+            if r.is_ok() {
+                let ip_str = r.unwrap();
+                let mut changed = false;
+                // let key = format!("{}", item.record_id);
+                match cache.get(&item.record_id) {
+                    Some(x) => {
+                        if *x != ip_str {
+                            // println!("x:{} ip_str:{}", *x, ip_str);
+                            changed = true;
+                        }
                     }
-                }
-                None => {
-                    let res = client.execute(DescribeRecordList {
-                        Domain: conf.domain.clone(),
-                        Subdomain: Some(item.subdomain.clone()),
-                        Keyword: None,
-                    })?;
-                    let record_list = res
-                        .Response
-                        .RecordList
-                        .ok_or(anyhow::anyhow!("No record list returned!"))?;
-                    for record in record_list {
-                        if record.RecordId == item.record_id && record.Type == item.record_type {
-                            if record.Value != ip_str {
-                                changed = true;
-                                println!(
-                                    "ID: {} O: {} N: {}",
-                                    item.record_id, record.Value, ip_str
-                                );
+                    None => {
+                        let res = client.execute(DescribeRecordList {
+                            Domain: conf.domain.clone(),
+                            Subdomain: Some(item.subdomain.clone()),
+                            Keyword: None,
+                        })?;
+                        let record_list = res
+                            .Response
+                            .RecordList
+                            .ok_or(anyhow::anyhow!("No record list returned!"))?;
+                        for record in record_list {
+                            if record.RecordId == item.record_id && record.Type == item.record_type
+                            {
+                                if record.Value != ip_str {
+                                    changed = true;
+                                    println!(
+                                        "ID: {} O: {} N: {}",
+                                        item.record_id, record.Value, ip_str
+                                    );
+                                }
+                                cache.insert(item.record_id, ip_str.clone());
                             }
-                            cache.insert(item.record_id, ip_str.clone());
                         }
                     }
                 }
-            }
 
-            if changed {
-                if dry {
-                    println!("DRY RUN set id: {} with ip: {}", item.record_id, ip_str);
-                } else {
-                    println!("ModifyDDNS set id: {} with ip: {}", item.record_id, ip_str);
-                    client.execute(ModifyDynamicDNS {
-                        Domain: conf.domain.clone(),
-                        SubDomain: item.subdomain.clone(),
-                        RecordId: item.record_id,
-                        RecordLine: dnspod_lib::data_types::RecordLine::默认,
-                        Value: ip_str,
-                        Ttl: 60,
-                    })?;
+                if changed {
+                    if dry {
+                        println!("DRY RUN set id: {} with ip: {}", item.record_id, ip_str);
+                    } else {
+                        println!("ModifyDDNS set id: {} with ip: {}", item.record_id, ip_str);
+                        client.execute(ModifyDynamicDNS {
+                            Domain: conf.domain.clone(),
+                            SubDomain: item.subdomain.clone(),
+                            RecordId: item.record_id,
+                            RecordLine: dnspod_lib::data_types::RecordLine::默认,
+                            Value: ip_str,
+                            Ttl: 60,
+                        })?;
+                    }
                 }
             }
         }
